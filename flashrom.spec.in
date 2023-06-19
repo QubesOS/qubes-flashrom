@@ -1,0 +1,77 @@
+Name:		flashrom
+Version:	@VERSION@
+Release:	1%{?dist}
+Summary:	Simple program for reading/writing flash chips content
+License:	GPLv2
+URL:		https://flashrom.org
+
+Source0:	https://download.flashrom.org/releases/%{name}-v%{version}.tar.bz2
+
+BuildRequires:	gnupg2
+BuildRequires:	gcc
+BuildRequires:	meson
+BuildRequires:	pciutils-devel
+BuildRequires:	libjaylink-devel
+BuildRequires:	libftdi-devel
+%if 0%{?fedora} >= 37 || 0%{?rhel} > 9
+BuildRequires:	libusb-compat-0.1-devel
+%else
+BuildRequires:	libusb-devel
+%endif
+# Used for new programmers (libusb0 will eventually be removed)
+BuildRequires:	libusbx-devel
+BuildRequires:	systemd
+BuildRequires:	zlib-devel
+%ifarch %{ix86} x86_64 aarch64
+BuildRequires:	dmidecode
+Requires:	dmidecode
+%endif
+Requires:	udev
+# see rhbz #495226
+ExcludeArch:	s390 s390x
+
+
+%description
+flashrom is a utility for identifying, reading, writing, verifying and erasing
+flash chips. It is designed to flash BIOS/EFI/coreboot/firmware/optionROM
+images on mainboards, network/graphics/storage controller cards, and various
+other programmer devices.
+
+%package devel
+Summary: Development package for %{name}
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description devel
+Files for development with %{name}.
+
+%prep
+%autosetup -p1 -n %{name}-v%{version}
+# Replace GROUP="plugdev" specifiers with TAG+="uaccess"
+sed -e 's/MODE="[0-9]*", GROUP="plugdev"/TAG+="uaccess"/g' util/flashrom_udev.rules -i
+
+%build
+%meson -Dtests=disabled
+%meson_build
+
+%install
+%meson_install
+
+install -D -p -m 0644 util/flashrom_udev.rules %{buildroot}/%{_udevrulesdir}/60_flashrom.rules
+rm %{buildroot}/%{_libdir}/libflashrom.a
+
+%files
+%license COPYING
+%doc README
+%{_sbindir}/%{name}
+%{_mandir}/man8/%{name}.*
+%{_udevrulesdir}/60_flashrom.rules
+%{_libdir}/libflashrom.so.1
+%{_libdir}/libflashrom.so.1.0.0
+
+%files devel
+%{_includedir}/libflashrom.h
+%{_libdir}/libflashrom.so
+%{_libdir}/pkgconfig/flashrom.pc
+
+%changelog
+@CHANGELOG@

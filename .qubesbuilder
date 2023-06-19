@@ -1,0 +1,8 @@
+host:
+  rpm:
+    build:
+    - flashrom.spec
+source:
+  files:
+  - url: https://download.flashrom.org/releases/flashrom-v@VERSION@.tar.bz2
+    sha512: flashrom-v@VERSION@.tar.bz2.sha512
